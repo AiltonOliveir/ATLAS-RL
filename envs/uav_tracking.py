@@ -47,8 +47,10 @@ class TrackingEnv(gym.Env):
 
     def reset (self, seed = None, options = None):
         super().reset(seed=seed)
+        self.uav._reset_flight()
         return 0
     
     def close(self):
         #Land the drone and finish the simulation
-        pass
+        self.uav.airsim_land()
+        #To-do (Finish the simulation method)
