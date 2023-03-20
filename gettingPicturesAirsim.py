@@ -3,6 +3,7 @@ import os
 import tempfile
 import numpy as np
 import random as rd
+import json
 
 #Correction of a bug that input twice
 def cBug1():
@@ -15,6 +16,10 @@ IS_EXTERNAL_CAM = True
 #start some global variables
 typePose= 0
 interaction = 0
+
+listCarPosition = []
+listCameraPosition = []
+listFov = []
 
 #starting the conection with airsim
 client = airsim.VehicleClient()
@@ -37,7 +42,7 @@ cBug1()
 requests = [airsim.ImageRequest(CAM_NAME, airsim.ImageType.Scene)]
 
 #starting takng pictures
-while interaction < 100:
+while interaction < 160:
     
     #getting the pose of the car and spliting in position and orientation
     objectPose = client.simGetObjectPose("carro")
@@ -48,11 +53,9 @@ while interaction < 100:
     objectZajust = objectPosition.z_val - 1.012
 
     #Puting the camera close to the car
-    x = -13
-    y = 2
     
-    # x = objectPosition.x_val + 3
-    # y = objectPosition.y_val 
+    x = objectPosition.x_val + 3
+    y = objectPosition.y_val 
 
     #Defining the camera's position
     a = 2 + (2*rd.random())
@@ -61,6 +64,11 @@ while interaction < 100:
 
     filename = os.path.join(tmp_dir,'image' + "_" + str(interaction))
     
+    auxAngYaw = np.arange(-0.6, 0.6, 0.001)
+    auxAngYawInd = rd.randint(0, len(auxAngYaw)-1)
+
+    auxAngPitch = np.arange(-0.1, 0.1, 0.01)
+    auxAngIndPitch = rd.randint(0, len(auxAngPitch)-1)
     #getting the relative distance between camera and car
     x_rel = positions[typePose][0]-objectPosition.x_val
     y_rel = positions[typePose][1]-objectPosition.y_val
@@ -74,7 +82,7 @@ while interaction < 100:
          pitch = 0
 
     #Adjusting the camera yaw according to quadrant     
-    if x_rel > 0 and y_rel > 0:
+    if x_rel >= 0 and y_rel >= 0:
         yaw = np.arctan((y_rel)/(x_rel))
         yaw = np.pi + yaw
 
@@ -91,6 +99,28 @@ while interaction < 100:
 
     else:
          yaw = 0
+    
+    shouldSeeyaw = yaw
+    shouldSeeyawpitch = pitch
+    yaw = yaw + auxAngYaw[auxAngYawInd]
+    pitch = pitch + auxAngPitch[auxAngIndPitch]
+    #distance = np.sqrt((x_rel**2)+(y_rel**2)+(z_rel**2))
+    #nfov = 270/distance
+    #client.simSetCameraFov("fixed1",nfov,external=True)
+    fov = client.simGetCameraInfo('fixed1', external=True)
+    
+ 
+    dictInformation = { "car_position" : [objectPosition.x_val, objectPosition.y_val, objectPosition.z_val],
+                        "camera_position": positions[typePose] , "camera_fov" : fov.fov, "diffYaw" :auxAngYaw[auxAngYawInd], 
+                        "diffPitch": auxAngPitch[auxAngIndPitch]}
+    
+
+    jsonString = json.dumps(dictInformation, indent=7)
+
+    with open("/home/caio/Documents/Drone/Codes/dataJson/data"+str(interaction)+".json", "w") as jsonFile:
+    #start procedure
+        jsonFile.write(jsonString)
+        jsonFile.close
 
     #setting the new camera's pose
     npose = airsim.Pose(position_val=airsim.Vector3r(positions[typePose][0], positions[typePose][1], positions[typePose][2] ), orientation_val=airsim.to_quaternion(pitch, 0, yaw ))
