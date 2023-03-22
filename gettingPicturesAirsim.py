@@ -42,8 +42,8 @@ cBug1()
 requests = [airsim.ImageRequest(CAM_NAME, airsim.ImageType.Scene)]
 
 #starting takng pictures
-while interaction < 160:
-    
+while interaction < 1000:
+    print(interaction)
     #getting the pose of the car and spliting in position and orientation
     objectPose = client.simGetObjectPose("carro")
     objectPosition = objectPose.position
