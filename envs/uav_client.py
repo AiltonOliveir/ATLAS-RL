@@ -19,7 +19,11 @@ class UAV():
         self.client.enableApiControl(True, uav_id)
         self.client.armDisarm(True, uav_id)
         self.client.takeoffAsync(vehicle_name=uav_id).join()
-    
+
+    def _gps_get(self,uav_id="uav1"):
+         x = self.client.getMultirotorState(vehicle_name=uav_id)
+        return x
+
     def _reset_flight(self):
         self.client.reset()
         self._start_fligth()
@@ -40,3 +44,7 @@ class UAV():
 
     def _positions(self):
         pass
+
+if __name__== "__main__":
+    x = x._gps_get()
+    print(type(x))
