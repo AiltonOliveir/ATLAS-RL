@@ -6,7 +6,7 @@ class UAV():
 
         self.client = airsim.MultirotorClient()
         self.client.confirmConnection()
-        self.image_request = airsim.ImageRequest(0, airsim.ImageType.Scene) #png
+        self.image_request = airsim.ImageRequest(0, airsim.ImagesTsype.Scene) #png
         self.encode_action = {
             [0,0,1]: 0,[0,0,-1]: 1,
             [1,0,0]: 2, [1,1,0]: 3,
@@ -21,7 +21,7 @@ class UAV():
         self.client.takeoffAsync(vehicle_name=uav_id).join()
 
     def _gps_get(self,uav_id="uav1"):
-         x = self.client.getMultirotorState(vehicle_name=uav_id)
+        x = self.client.getMultirotorState(vehicle_name=uav_id)
         return x
 
     def _reset_flight(self):
@@ -46,5 +46,8 @@ class UAV():
         pass
 
 if __name__== "__main__":
-    x = x._gps_get()
-    print(type(x))
+    x = UAV()
+    gps_data = x._gps_get()
+
+    print(type(gps_data))
+    print(gps_data)
