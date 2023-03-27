@@ -21,6 +21,9 @@ class UAV():
         self.client.takeoffAsync(vehicle_name=uav_id).join()
 
     def _gps_get(self,uav_id="uav1"):
+        """
+        
+        """
         x = self.client.getMultirotorState(vehicle_name=uav_id)
         return x
 
