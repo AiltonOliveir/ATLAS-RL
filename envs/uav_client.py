@@ -26,7 +26,7 @@ class UAV():
 
     def _reset_flight(self):
         self.client.reset()
-        self._start_fligth()
+        self._start_fligth()    
     
     def airsim_land(self,uav_id="uav1"):
         landed = self.client.getMultirotorState(vehicle_name=uav_id).landed_state
