@@ -6,7 +6,7 @@ class UAV():
 
         self.client = airsim.MultirotorClient()
         self.client.confirmConnection()
-        self.image_request = airsim.ImageRequest(0, airsim.ImagesTsype.Scene) #png
+        self.image_request = airsim.ImageRequest(0, airsim.ImageType.Scene) #png
         self.encode_action = {
             [0,0,1]: 0,[0,0,-1]: 1,
             [1,0,0]: 2, [1,1,0]: 3,

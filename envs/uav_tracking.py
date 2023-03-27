@@ -13,7 +13,7 @@ class TrackingEnv(gym.Env):
         self.uav = UAV()
         self.map_size = 5e2
 
-        # Adjust to possible possitions of agent and target
+        # Adjust to possible positions of agent and target
         self.observation_space = spaces.Dict(
             {
                 "agent": spaces.Box(-self.map_size, self.map_size, shape=(3,), dtype=float),
@@ -25,6 +25,7 @@ class TrackingEnv(gym.Env):
         else:
             # Aceleration or NED - TO-DO
             self.action_space = spaces.Box(0, 1, (4,))
+
     
     def _get_obs(self):
         pass
