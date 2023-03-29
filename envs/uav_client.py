@@ -22,7 +22,22 @@ class UAV():
 
     def _gps_get(self,uav_id="uav1"):
         """
+        The postition inside the returned MultiRotorState is in the frame of the vehicle's starting point
         
+        parameters: vehicle_name(str,optional) vehicle to get the state of
+
+        returns:
+
+        can_arm=False
+        collision=<collisioninfo>{}
+        gps_location=<GeoPoint>{}
+        kinematics_estimated=<KinematicState>{}
+        landed_state=0
+        rc_data={}
+        ready= False
+        ready_message="
+        timestamp=0
+
         """
         x = self.client.getMultirotorState(vehicle_name=uav_id)
         return x

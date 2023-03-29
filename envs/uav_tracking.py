@@ -25,6 +25,25 @@ class TrackingEnv(gym.Env):
         else:
             # Aceleration or NED - TO-DO
             self.action_space = spaces.Box(0, 1, (4,))
+            self.action_space = 
+
+            """
+            moveByVelocityAsync(vx, vy, vz, duration=0, yaw_mode=<YawMode>{ 'is_rate':True, 'yaw_or_rate':0.0}, vehicle_name=")
+
+            Parameters:
+
+            vx(float): Desired velocity in world (NED) X axis
+            vy(float): Desired velocity in world (NED) Y axis
+            vz(float): Desired velocity in world (NED) Z axis
+            duration: Desired amount of time(seconds), to send this command for
+            drivetrain(DrivetrainType, optional)-
+            yaw_mode(YawMode, optional) - 
+            vehicle_name(str, optional) - Name of the multirotor to send this command to 
+
+            Returns:
+
+            client.METHOD().join()  
+            """
 
     
     def _get_obs(self):
