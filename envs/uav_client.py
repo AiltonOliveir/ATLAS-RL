@@ -19,10 +19,32 @@ class UAV():
         self.client.enableApiControl(True, uav_id)
         self.client.armDisarm(True, uav_id)
         self.client.takeoffAsync(vehicle_name=uav_id).join()
-    
+
+    def _gps_get(self,uav_id="uav1"):
+        """
+        The postition inside the returned MultiRotorState is in the frame of the vehicle's starting point
+        
+        parameters: vehicle_name(str,optional) vehicle to get the state of
+
+        returns:
+
+        can_arm=False
+        collision=<collisioninfo>{}
+        gps_location=<GeoPoint>{}
+        kinematics_estimated=<KinematicState>{}
+        landed_state=0
+        rc_data={}
+        ready= False
+        ready_message="
+        timestamp=0
+
+        """
+        x = self.client.getMultirotorState(vehicle_name=uav_id)
+        return x
+
     def _reset_flight(self):
         self.client.reset()
-        self._start_fligth()
+        self._start_fligth()    
     
     def airsim_land(self,uav_id="uav1"):
         landed = self.client.getMultirotorState(vehicle_name=uav_id).landed_state
@@ -40,3 +62,10 @@ class UAV():
 
     def _positions(self):
         pass
+
+if __name__== "__main__":
+    x = UAV()
+    gps_data = x._gps_get()
+
+    print(type(gps_data))
+    print(gps_data)
