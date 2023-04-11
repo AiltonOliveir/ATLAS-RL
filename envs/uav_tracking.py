@@ -12,6 +12,11 @@ class TrackingEnv(gym.Env):
         self.ep_lenght = ep_lenght
         self.uav = UAV()
         self.map_size = 5e2
+        self.max_distance = 100 # maximum distance between agent and target
+        self.threshold = 10 # threshold distance for giving reward
+        self.max_episode_steps = 100 # variable to define the maximum number of steps in an episode.
+        self.current_step = 0 # variable to keep track of the current step in the episode
+        self.done = False # variable to keep track of whether the episode is done or not.
 
         # Adjust to possible positions of agent and target
         self.observation_space = spaces.Dict(
@@ -47,42 +52,75 @@ class TrackingEnv(gym.Env):
 
     
     def _get_obs(self):
-        pass
 
+        return {'agent': self.uav.position, 'target': self.uav.target_position}
+    
     def render(active= False):
         #Check how disable render ate unreal
         pass
 
-    def _compute_reward(self):
+    def _compute_reward(self,achieved_goal, desired_goal, info):
         """
         To develop a simple reward mechanic for the drone to go from point A to point B, 
-        We define a reward based on the distance traveled by the drone in the direction of the target,
-        calculating the distance between the current position of the drone and the target position, 
-        and then subtract the distance in the next time step from the current distance. 
-        This difference would give us the progress the drone made towards the target, and we can use this as the reward.
+        If the agent is within the distance_threshold of the target point, it receives a reward of 1.0. 
+        If it is farther away, the reward is calculated based on how far it is from the target point relative to the maximum distance the agent can be from the target
+        point (self.max_distance). This ensures that the reward is always between -1.0 and 0.0.
         """
+    # Check if the agent has reached the goal position
+        distance = np.linalg.norm(achieved_goal - desired_goal)
 
-        drone_pos = self._get_obs()["agent"]
-        target_pos = self._get_obs()["target"]
-        distance_to_target = np.linalg.norm(drone_pos - target_pos)
+        # Check if the agent has reached the goal position
+        if distance < self.threshold:
+            reward = 1.0
+        else:
+            # Compute a reward based on the distance to the goal
+            if distance < self.max_distance:
+                reward = (self.max_distance - distance) / self.max_distance
+            else:
+                reward = 0.0
 
-        # Move the drone in the direction of the target and measure the progress
-        self.uav.discrete_action(2)  # Move North
-        new_drone_pos = self._get_obs()["agent"]
-        new_distance_to_target = np.linalg.norm(new_drone_pos - target_pos)
-        distance_moved_towards_target = distance_to_target - new_distance_to_target
+        # Penalize the agent if it tries to move backwards
+        if info['action'] == 1 and achieved_goal[0] < self.current_position[0]:
+            reward -= 0.5
 
-        reward = distance_moved_towards_target
+        # Penalize the agent if it moves too far away from the current position
+        if np.linalg.norm(achieved_goal - self.current_position) > self.max_distance:
+            reward -= 0.5
+
         return reward
 
-
     def step(self,action):
+        """
+        The reward is calculated based on the agent's position relative to the goal position. As the agent gets closer to the goal position, the reward increases. 
+        If the agent reaches the goal position, the reward is set to 1. 
+        To make sure the agent cannot move backward after reaching the goal position, 
+        we check if the current position is equal to the goal position and the action is to move backward. 
+        If so, we set the done flag to True, indicating the end of the episode and the reward to -1 if the agent tries to move backward after reaching the goal position. This is to discourage the agent from attempting to move backward once it has reached the goal position
+        """
         self.uav.discrete_action(action)
         observation = self._get_obs()
-        reward = self._compute_reward()
         done = self._state >= self.ep_lenght
-        state = [0,0,0,0,0,0] #Discrete
-        info = state
+        info = {'achieved_goal': observation['achieved_goal'], 'desired_goal': observation['desired_goal'], 'action': action}
+
+        # Move the agent according to the action
+        if action == 0: # move forward
+            self.position += 1
+        elif action == 1: # move backward
+            self.position -= 1
+
+        # Update the reward based on the new position
+        achieved_goal = observation['achieved_goal']
+        desired_goal = observation['desired_goal']
+        reward = self._compute_reward(achieved_goal, desired_goal, info)
+
+        # Check if the episode is done
+        if self.position == self.goal_position and action == 1: # reached goal and tries to move backward
+            reward = -1
+            done = True
+        elif self.position == self.goal_position: # reached goal
+            reward = 1
+            done = True
+
         return observation, reward, done, info
 
     def reset (self, seed = None, options = None):
