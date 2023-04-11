@@ -54,7 +54,27 @@ class TrackingEnv(gym.Env):
         pass
 
     def _compute_reward(self):
-        pass
+        """
+        To develop a simple reward mechanic for the drone to go from point A to point B, 
+        We define a reward based on the distance traveled by the drone in the direction of the target,
+        calculating the distance between the current position of the drone and the target position, 
+        and then subtract the distance in the next time step from the current distance. 
+        This difference would give us the progress the drone made towards the target, and we can use this as the reward.
+        """
+
+        drone_pos = self._get_obs()["agent"]
+        target_pos = self._get_obs()["target"]
+        distance_to_target = np.linalg.norm(drone_pos - target_pos)
+
+        # Move the drone in the direction of the target and measure the progress
+        self.uav.discrete_action(2)  # Move North
+        new_drone_pos = self._get_obs()["agent"]
+        new_distance_to_target = np.linalg.norm(new_drone_pos - target_pos)
+        distance_moved_towards_target = distance_to_target - new_distance_to_target
+
+        reward = distance_moved_towards_target
+        return reward
+
 
     def step(self,action):
         self.uav.discrete_action(action)
