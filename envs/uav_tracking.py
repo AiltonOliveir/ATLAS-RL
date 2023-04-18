@@ -52,8 +52,29 @@ class TrackingEnv(gym.Env):
 
     
     def _get_obs(self):
+        """
+        Return the current observation of the environment. 
+        """
+        # Get the current state of the drone
+        state = self.uav.get_state()
 
-        return {'agent': self.uav.position, 'target': self.uav.target_position}
+        # Get the position and orientation of the drone
+        position = np.array([state.kinematics_estimated.position.x_val,
+                            state.kinematics_estimated.position.y_val,
+                            state.kinematics_estimated.position.z_val])
+
+        orientation = np.array([state.kinematics_estimated.orientation.w_val,
+                                state.kinematics_estimated.orientation.x_val,
+                                state.kinematics_estimated.orientation.y_val,
+                                state.kinematics_estimated.orientation.z_val])
+
+        # Compute the achieved goal and desired goal
+        achieved_goal = position
+        desired_goal = np.array(self.goal_position)
+
+        # Combine the position and orientation into a single observation
+        observation = np.concatenate([position, orientation])
+        return {'observation': observation, 'achieved_goal': achieved_goal, 'desired_goal': desired_goal}
     
     def render(active= False):
         #Check how disable render ate unreal
@@ -62,29 +83,25 @@ class TrackingEnv(gym.Env):
     def _compute_reward(self,achieved_goal, desired_goal, info):
         """
         To develop a simple reward mechanic for the drone to go from point A to point B, 
-        If the agent is within the distance_threshold of the target point, it receives a reward of 1.0. 
-        If it is farther away, the reward is calculated based on how far it is from the target point relative to the maximum distance the agent can be from the target
-        point (self.max_distance). This ensures that the reward is always between -1.0 and 0.0.
+        Computes the reward for a given achieved goal and the desired goal.
+        Penalizes the agent if it moves away from the goal compared to the previous step.
         """
-    # Check if the agent has reached the goal position
-        distance = np.linalg.norm(achieved_goal - desired_goal)
+        # Compute the distance to the goal for the current and previous steps        
+        distance_current = np.linalg.norm(achieved_goal - desired_goal)
+        distance_previous = np.linalg.norm(info['achieved_goal'] - desired_goal) if 'achieved_goal' in info else distance_current
 
         # Check if the agent has reached the goal position
-        if distance < self.threshold:
+        if distance_current < self.threshold:
             reward = 1.0
         else:
             # Compute a reward based on the distance to the goal
-            if distance < self.max_distance:
-                reward = (self.max_distance - distance) / self.max_distance
+            if distance_current < self.max_distance:
+                reward = (self.max_distance - distance_current) / self.max_distance
             else:
                 reward = 0.0
 
-        # Penalize the agent if it tries to move backwards
-        if info['action'] == 1 and achieved_goal[0] < self.current_position[0]:
-            reward -= 0.5
-
-        # Penalize the agent if it moves too far away from the current position
-        if np.linalg.norm(achieved_goal - self.current_position) > self.max_distance:
+        # Penalize the agent if it moves away from the goal
+        if distance_current > distance_previous:
             reward -= 0.5
 
         return reward
