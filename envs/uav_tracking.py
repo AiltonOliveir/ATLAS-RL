@@ -17,6 +17,7 @@ class TrackingEnv(gym.Env):
         self.max_episode_steps = 100 # variable to define the maximum number of steps in an episode.
         self.current_step = 0 # variable to keep track of the current step in the episode
         self.done = False # variable to keep track of whether the episode is done or not.
+        self.reward = 0.0 # parameter to store the cumulative reward
 
         # Adjust to possible positions of agent and target
         self.observation_space = spaces.Dict(
@@ -56,8 +57,7 @@ class TrackingEnv(gym.Env):
         Return the current observation of the environment. 
         """
         # Get the current state of the drone
-        state = self.uav.get_state()
-
+        state = self.uav.client.getMultirotorState()
         # Get the position and orientation of the drone
         position = np.array([state.kinematics_estimated.position.x_val,
                             state.kinematics_estimated.position.y_val,
@@ -86,6 +86,7 @@ class TrackingEnv(gym.Env):
         Computes the reward for a given achieved goal and the desired goal.
         Penalizes the agent if it moves away from the goal compared to the previous step.
         """
+        self.reward += self._compute_reward(achieved_goal, desired_goal, info)
         # Compute the distance to the goal for the current and previous steps        
         distance_current = np.linalg.norm(achieved_goal - desired_goal)
         distance_previous = np.linalg.norm(info['achieved_goal'] - desired_goal) if 'achieved_goal' in info else distance_current
