@@ -3,9 +3,10 @@ import airsim
 
 class UAV():
     def __init__(self):
-
+        print('Connecting Airsim')
         self.client = airsim.MultirotorClient()
         self.client.confirmConnection()
+        print('Airsim already')
         self.image_request = airsim.ImageRequest(0, airsim.ImageType.Scene) #png
         self.encode_action = {
             [0,0,1]: 0,[0,0,-1]: 1,

@@ -1,12 +1,12 @@
 import numpy as np
 import airsim
-from uav_client import UAV
+from .uav_client import UAV
 import gymnasium as gym
 from gymnasium import spaces
 
 class TrackingEnv(gym.Env):
 
-    def __init__(self, discrete_actions = True,ep_lenght=50):
+    def __init__(self, discrete_actions = True,ep_lenght=100, goal = [20,20,10]):
         
         self._state = 0
         self.ep_lenght = ep_lenght
@@ -18,6 +18,7 @@ class TrackingEnv(gym.Env):
         self.current_step = 0 # variable to keep track of the current step in the episode
         self.done = False # variable to keep track of whether the episode is done or not.
         self.reward = 0.0 # parameter to store the cumulative reward
+        self.goal_position = np.array(goal)
 
         # Adjust to possible positions of agent and target
         self.observation_space = spaces.Dict(
@@ -31,25 +32,6 @@ class TrackingEnv(gym.Env):
         else:
             # Aceleration or NED - TO-DO
             self.action_space = spaces.Box(0, 1, (4,))
-            self.action_space = 
-
-            """
-            moveByVelocityAsync(vx, vy, vz, duration=0, yaw_mode=<YawMode>{ 'is_rate':True, 'yaw_or_rate':0.0}, vehicle_name=")
-
-            Parameters:
-
-            vx(float): Desired velocity in world (NED) X axis
-            vy(float): Desired velocity in world (NED) Y axis
-            vz(float): Desired velocity in world (NED) Z axis
-            duration: Desired amount of time(seconds), to send this command for
-            drivetrain(DrivetrainType, optional)-
-            yaw_mode(YawMode, optional) - 
-            vehicle_name(str, optional) - Name of the multirotor to send this command to 
-
-            Returns:
-
-            client.METHOD().join()  
-            """
 
     
     def _get_obs(self):
@@ -59,22 +41,15 @@ class TrackingEnv(gym.Env):
         # Get the current state of the drone
         state = self.uav.client.getMultirotorState()
         # Get the position and orientation of the drone
-        position = np.array([state.kinematics_estimated.position.x_val,
+        achieved_goal = np.array([state.kinematics_estimated.position.x_val,
                             state.kinematics_estimated.position.y_val,
                             state.kinematics_estimated.position.z_val])
 
-        orientation = np.array([state.kinematics_estimated.orientation.w_val,
+        '''orientation = np.array([state.kinematics_estimated.orientation.w_val,
                                 state.kinematics_estimated.orientation.x_val,
                                 state.kinematics_estimated.orientation.y_val,
-                                state.kinematics_estimated.orientation.z_val])
-
-        # Compute the achieved goal and desired goal
-        achieved_goal = position
-        desired_goal = np.array(self.goal_position)
-
-        # Combine the position and orientation into a single observation
-        observation = np.concatenate([position, orientation])
-        return {'observation': observation, 'achieved_goal': achieved_goal, 'desired_goal': desired_goal}
+                                state.kinematics_estimated.orientation.z_val])'''
+        return achieved_goal
     
     def render(active= False):
         #Check how disable render ate unreal
@@ -118,7 +93,7 @@ class TrackingEnv(gym.Env):
         self.uav.discrete_action(action)
         observation = self._get_obs()
         done = self._state >= self.ep_lenght
-        info = {'achieved_goal': observation['achieved_goal'], 'desired_goal': observation['desired_goal'], 'action': action}
+        info = {'achieved_goal': observation, 'desired_goal': self.goal_position, 'action': action}
 
         # Move the agent according to the action
         if action == 0: # move forward
@@ -127,9 +102,7 @@ class TrackingEnv(gym.Env):
             self.position -= 1
 
         # Update the reward based on the new position
-        achieved_goal = observation['achieved_goal']
-        desired_goal = observation['desired_goal']
-        reward = self._compute_reward(achieved_goal, desired_goal, info)
+        reward = self._compute_reward(observation, self.goal_position, info)
 
         # Check if the episode is done
         if self.position == self.goal_position and action == 1: # reached goal and tries to move backward
