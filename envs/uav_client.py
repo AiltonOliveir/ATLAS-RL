@@ -9,11 +9,11 @@ class UAV():
         print('Airsim already')
         self.image_request = airsim.ImageRequest(0, airsim.ImageType.Scene) #png
         self.encode_action = {
-            [0,0,1]: 0,[0,0,-1]: 1,
-            [1,0,0]: 2, [1,1,0]: 3,
-            [0,1,0]: 4, [-1,1,0]:5,
-            [-1,0,0]:6,[-1,-1,0]:7,
-            [0,-1,0]:8, [1,-1,0]: 9
+            (0,0,1): 0,(0,0,-1): 1,
+            (1,0,0): 2, (1,1,0): 3,
+            (0,1,0): 4, (-1,1,0):5,
+            (-1,0,0):6,(-1,-1,0):7,
+            (0,-1,0):8, (1,-1,0): 9
             }
     
     def _start_fligth(self,uav_id="uav1"):
