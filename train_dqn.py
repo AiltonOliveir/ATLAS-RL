@@ -5,10 +5,6 @@ from dqn import DQNAgent
 
 # Instantiate your custom environment
 env = TrackingEnv()
-
-# Debug
-#print(env.observation_space['agent'].shape)
-#exit()
 # Instantiate DQNAgent
 agent = DQNAgent(env.action_space, env.observation_space)
 
@@ -17,7 +13,6 @@ num_episodes = env.ep_lenght
 state = env.reset()
 for episode in range(num_episodes):
     done = False
-    print(state)
     # Choose an action using epsilon-greedy policy
     action = agent.act(state)
     # Take a step in the environment
