@@ -1,7 +1,7 @@
 import tensorflow as tf
 from keras.models import Sequential
-from keras.layers import Dense
-from keras.optimizers import Adam
+from keras.layers import Dense,Input
+from tensorflow.keras.optimizers import Adam
 import numpy as np
 from collections import deque
 import random
@@ -10,7 +10,8 @@ import random
 def build_model(action_space,obs_space):
     # Build and compile Q-network model
     model = Sequential()
-    model.add(Dense(64, activation='relu', input_shape=(obs_space.shape)))
+    model.add(Input(shape=((obs_space.shape[0]))))
+    model.add(Dense(64, activation='relu'))
     model.add(Dense(64, activation='relu'))
     model.add(Dense(action_space, activation='linear'))
     model.compile(loss='mse', optimizer=Adam(learning_rate=0.001))
@@ -33,8 +34,11 @@ class DQNAgent:
     def act(self, state):
         # with probability epsilon return a random action to explore the environment
         if np.random.rand() < self.epsilon:
+            print("Random!")
             return np.random.randint(self.action_space.n)
-        q_values = self.model.predict(state)
+        print("DQN!")
+        print(tf.expand_dims(state, axis=0))
+        q_values = self.model.predict(tf.expand_dims(state, axis=0))
         return np.argmax(q_values[0])
 
     def remember(self, state, action, reward, next_state, done):
@@ -50,6 +54,10 @@ class DQNAgent:
     def replay(self):
         if len(self.memory) < self.batch_size:
             return
+        print(self.memory.shape)
+        print(self.batch_size.shape)
+        print(type(self.memory))
+        print(type(self.batch_size))
         minibatch = np.array(random.sample(self.memory, self.batch_size))
         states = np.concatenate(minibatch[:, 0])
         actions = minibatch[:, 1].astype(int)

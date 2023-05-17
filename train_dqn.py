@@ -1,22 +1,23 @@
 import gymnasium as gym
+import tensorflow as tf
 from envs.uav_tracking import TrackingEnv
 from dqn import DQNAgent
 
 # Instantiate your custom environment
 env = TrackingEnv()
 
-# Define hyperparameters
-state_size = env.observation_space.shape[0]
-action_size = env.action_space.n
-
+# Debug
+#print(env.observation_space['agent'].shape)
+#exit()
 # Instantiate DQNAgent
 agent = DQNAgent(env.action_space, env.observation_space)
 
 # Train the agent
 num_episodes = env.ep_lenght
+state = env.reset()
 for episode in range(num_episodes):
-    state = env.reset()
     done = False
+    print(state)
     # Choose an action using epsilon-greedy policy
     action = agent.act(state)
     # Take a step in the environment

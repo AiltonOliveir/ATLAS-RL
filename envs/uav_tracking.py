@@ -61,7 +61,6 @@ class TrackingEnv(gym.Env):
         Computes the reward for a given achieved goal and the desired goal.
         Penalizes the agent if it moves away from the goal compared to the previous step.
         """
-        self.reward += self._compute_reward(achieved_goal, desired_goal, info)
         # Compute the distance to the goal for the current and previous steps        
         distance_current = np.linalg.norm(achieved_goal - desired_goal)
         distance_previous = np.linalg.norm(info['achieved_goal'] - desired_goal) if 'achieved_goal' in info else distance_current
@@ -95,28 +94,23 @@ class TrackingEnv(gym.Env):
         done = self._state >= self.ep_lenght
         info = {'achieved_goal': observation, 'desired_goal': self.goal_position, 'action': action}
 
-        # Move the agent according to the action
-        if action == 0: # move forward
-            self.position += 1
-        elif action == 1: # move backward
-            self.position -= 1
-
         # Update the reward based on the new position
-        reward = self._compute_reward(observation, self.goal_position, info)
+        self.reward += self._compute_reward(observation, self.goal_position, info)
 
         # Check if the episode is done
-        if self.position == self.goal_position and action == 1: # reached goal and tries to move backward
-            reward = -1
+        if np.array_equal(observation,self.goal_position) and action == 1: # reached goal and tries to move backward
+            self.reward = -1
             done = True
-        elif self.position == self.goal_position: # reached goal
-            reward = 1
+        elif np.array_equal(observation,self.goal_position): # reached goal
+            self.reward = 1
             done = True
 
-        return observation, reward, done, info
+        return observation, self.reward, done, info
 
     def reset (self, seed = None, options = None):
         super().reset(seed=seed)
         self.uav._reset_flight()
+        self.reward = 0
         return 0
     
     def close(self):
