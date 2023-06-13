@@ -24,9 +24,9 @@ class DQNAgent:
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
         self.gamma = 0.95
-        self.batch_size = 32
+        self.batch_size = 32 
+        self.memory = None
         self.action_space = action_space
-        self.memory = deque(maxlen=10000)
         self.model = build_model(action_space.n,obs_space["agent"])
         self.target_model = build_model(action_space.n,obs_space["agent"])
         self.target_model.set_weights(self.model.get_weights())
@@ -42,7 +42,13 @@ class DQNAgent:
         return np.argmax(q_values[0])
 
     def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))
+        if self.memory is None:
+            self.memory = np.array([state[0], action, reward, next_state, done])
+            print(self.memory)
+            return None
+        self.memory = np.vstack((self.memory,np.array((state, action, reward, next_state, done))))
+        print(self.memory)
+        #self.memory.append((state, action, reward, next_state, done))
     
     def update_epsilon(self):
         if self.epsilon > self.epsilon_min:
@@ -52,13 +58,16 @@ class DQNAgent:
         self.target_model.set_weights(self.model.get_weights())
 
     def replay(self):
-        if len(self.memory) < self.batch_size:
+        if self.memory.shape[0] < self.batch_size:
             return
-        print(self.memory.shape)
-        print(self.batch_size.shape)
+        #print(self.memory.shape)
+        #print(self.batch_size.shape)
         print(type(self.memory))
         print(type(self.batch_size))
-        minibatch = np.array(random.sample(self.memory, self.batch_size))
+        rng = np.random.default_rng()
+        rng.choice(5, 3)
+        print(rng.choice(self.memory, self.batch_size))
+        minibatch = np.array(rng.choice(self.memory, self.batch_size))
         states = np.concatenate(minibatch[:, 0])
         actions = minibatch[:, 1].astype(int)
         rewards = minibatch[:, 2]
